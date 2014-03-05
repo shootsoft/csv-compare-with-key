@@ -4,7 +4,9 @@ Compare tow csv file with defined keys
 
 # Useage
 
+```
 csv-compare-with-key -i <index csv file>  -k <index csv keys> -c <compare csv file> -e <compare csv keys> [options]
+```
 
 +  -i, --index-csv        Required. Input csv file to be indexed.
 +  -k, --index-keys       Required. Input csv file to be indexed key columns.
