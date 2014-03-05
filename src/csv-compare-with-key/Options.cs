@@ -26,7 +26,7 @@ namespace csv_compare_with_key
             HelpText = "Input csv file to be compared.")]
         public int[] CompareCSVKeys { get; set; }
 
-        [Option('t', "trimes", Required = false, DefaultValue = new char[]{'"'},
+        [Option('t', "trims", Required = false, DefaultValue = new char[]{'"'},
             HelpText = "Trimed column chars.")]
         public char[] Trims { get; set; }
 
