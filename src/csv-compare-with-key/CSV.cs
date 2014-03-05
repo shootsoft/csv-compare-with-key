@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Text;
@@ -9,6 +10,8 @@ namespace csv_compare_with_key
 {
     public class CSV
     {
+        const int LINE = 10000;
+
         public Options Option { get; set; }
 
         private HashSet<string> idx;
@@ -49,13 +52,13 @@ namespace csv_compare_with_key
                         }
                         line = sr.ReadLine();
                         indexLineCount++;
-                        if (indexLineCount % 100 == 0)
+                        if (indexLineCount % LINE == 0)
                         {
-                            Console.WriteLine("Index build with " + indexLineCount);
+                            Summary();
                         }
                     }
                 }
-                Console.WriteLine("Index build done with " + indexLineCount);
+                Summary();
                 r = true;
             }
             catch (Exception ex)
@@ -64,6 +67,91 @@ namespace csv_compare_with_key
             }
             return r;
 
+        }
+
+
+
+        public bool SearchAndGenerate()
+        {
+            bool r = false;
+
+            try
+            {
+                string sameKeyFile = Option.CompareCSV + ".same";
+                string diffKeyFile = Option.CompareCSV + ".diff";
+                string summaryFile = Option.CompareCSV + ".summary";
+                using(StreamReader sr = new StreamReader(Option.CompareCSV, Option.GetEncoding()))
+                {
+                    Stopwatch sw = new Stopwatch();
+                    sw.Start(); 
+                    StreamWriter swSame = CreateWriter(sameKeyFile);
+                    StreamWriter swDiff = CreateWriter(diffKeyFile);
+                    StreamWriter swSummary = CreateWriter(summaryFile);
+                    string line = sr.ReadLine();
+                    int sameLineCount = 0;
+                    int diffLineCount = 0;
+                    
+                    while(line!=null)
+                    {
+                        string[] cols = line.Split(Option.Split);
+                        string key = GetKey(cols, Option.Trims, Option.CompareCSVKeys);
+                        if (idx.Contains(key))
+                        {
+                            swSame.WriteLine(line);
+                            sameLineCount++;
+                        }
+                        else
+                        {
+                            swDiff.WriteLine(line);
+                            diffLineCount++;
+                        }
+
+                        line = sr.ReadLine();
+                        compareLineCount++;
+                        if (compareLineCount % LINE == 0)
+                        {
+                            Summary();
+                        }
+                    }
+                    sw.Stop();
+                    Summary();
+                    Console.WriteLine("Cost: " + sw.Elapsed);
+            
+                    swSummary.WriteLine("Index csv line count: " + this.indexLineCount);
+                    swSummary.WriteLine("Index csv key count: " + this.idx.Count);
+                    swSummary.WriteLine("Compare csv line count:" + compareLineCount);
+                    swSummary.WriteLine("Same key line count: " + sameLineCount);
+                    swSummary.WriteLine("Diff key line count: " + diffLineCount);
+                    swSummary.WriteLine("cost: " + sw.Elapsed);
+
+                    swSame.Close();
+                    swDiff.Close();
+                    swSummary.Close();
+                }
+
+
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex);
+            }
+            return r;
+
+        }
+
+
+        private void Summary()
+        {
+            Console.Clear();
+            if (indexLineCount>0)
+            {
+                Console.WriteLine("Index lines " + indexLineCount);
+            }
+            if (compareLineCount > 0)
+            {
+                Console.WriteLine("Compared lines " + compareLineCount);
+            
+            }
         }
 
 
@@ -88,68 +176,6 @@ namespace csv_compare_with_key
                 }
             }
             return sb.ToString();
-
-        }
-
-
-        public bool SearchAndGenerate()
-        {
-            bool r = false;
-
-            try
-            {
-                string sameKeyFile = Option.CompareCSV + ".same";
-                string diffKeyFile = Option.CompareCSV + ".diff";
-                string summaryFile = Option.CompareCSV + ".summary";
-                using(StreamReader sr = new StreamReader(Option.CompareCSV, Option.GetEncoding()))
-                {
-                    StreamWriter swSame = CreateWriter(sameKeyFile);
-                    StreamWriter swDiff = CreateWriter(diffKeyFile);
-                    StreamWriter swSummary = CreateWriter(summaryFile);
-                    string line = sr.ReadLine();
-                    int sameLineCount = 0;
-                    int diffLineCount = 0;
-                    while(line!=null)
-                    {
-                        string[] cols = line.Split(Option.Split);
-                        string key = GetKey(cols, Option.Trims, Option.CompareCSVKeys);
-                        if (idx.Contains(key))
-                        {
-                            swSame.WriteLine(line);
-                            sameLineCount++;
-                        }
-                        else
-                        {
-                            swDiff.WriteLine(line);
-                            diffLineCount++;
-                        }
-
-                        line = sr.ReadLine();
-                        compareLineCount++;
-                        if (compareLineCount % 100 == 0)
-                        {
-                            Console.WriteLine("Compared record " + compareLineCount);
-                        }
-                    }
-                    Console.WriteLine("Compared done " + compareLineCount);
-                    swSummary.WriteLine("Index csv line count: " + this.indexLineCount);
-                    swSummary.WriteLine("Index csv key count: " + this.idx.Count);
-                    swSummary.WriteLine("Compare csv line count:" + compareLineCount);
-                    swSummary.WriteLine("Same key line count: " + sameLineCount);
-                    swSummary.WriteLine("Diff key line count: " + diffLineCount);
-
-                    swSame.Close();
-                    swDiff.Close();
-                    swSummary.Close();
-                }
-
-
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine(ex);
-            }
-            return r;
 
         }
 
